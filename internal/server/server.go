@@ -11,6 +11,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/leetm4n/orders-service/api"
+	"github.com/leetm4n/orders-service/internal/repo"
 	"github.com/leetm4n/orders-service/pkg/middlewares"
 	validationMw "github.com/oapi-codegen/nethttp-middleware"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -20,6 +21,7 @@ import (
 var _ api.ServerInterface = (*ServerImpl)(nil)
 
 type ServerImpl struct {
+	queries *repo.Queries
 }
 
 type Server struct {
@@ -33,6 +35,7 @@ type ServerOptions struct {
 	Port                       int
 	Host                       string
 	GracefulShutdownTimeoutSec int
+	Queries                    *repo.Queries
 }
 
 func NewServer(opts ServerOptions) *Server {
@@ -53,13 +56,15 @@ func NewServer(opts ServerOptions) *Server {
 		},
 	})
 
-	s := &ServerImpl{}
+	s := &ServerImpl{
+		queries: opts.Queries,
+	}
 
 	isNotHealthzPath := func(r *http.Request) bool {
 		return r.URL.Path != "/healthz"
 	}
 
-	otelMux := otelhttp.NewHandler(api.HandlerFromMux(s, mux), "orders-ms-server", otelhttp.WithFilter(isNotHealthzPath))
+	otelMux := otelhttp.NewHandler(api.HandlerFromMux(s, mux), "orders-service-server", otelhttp.WithFilter(isNotHealthzPath))
 
 	handler := middlewares.ContentTypeSetterMW(validationMW(otelMux))
 

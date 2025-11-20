@@ -9,7 +9,40 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for OrderStatus.
+const (
+	Cancelled OrderStatus = "cancelled"
+	Delivered OrderStatus = "delivered"
+	Pending   OrderStatus = "pending"
+	Shipped   OrderStatus = "shipped"
+)
+
+// CreateOrderRequest defines model for CreateOrderRequest.
+type CreateOrderRequest struct {
+	IdempotencyKey  *openapi_types.UUID `json:"idempotencyKey,omitempty"`
+	Quantity        int                 `json:"quantity"`
+	ShippingAddress string              `json:"shippingAddress"`
+	Sku             openapi_types.UUID  `json:"sku"`
+}
+
+// Order defines model for Order.
+type Order struct {
+	CreatedAt       time.Time          `json:"createdAt"`
+	Id              openapi_types.UUID `json:"id"`
+	Quantity        int                `json:"quantity"`
+	ShippingAddress string             `json:"shippingAddress"`
+	Sku             openapi_types.UUID `json:"sku"`
+	Status          OrderStatus        `json:"status"`
+	UpdatedAt       time.Time          `json:"updatedAt"`
+}
+
+// OrderStatus defines model for Order.Status.
+type OrderStatus string
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
@@ -23,11 +56,20 @@ type GetHealthResponse struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
+type CreateOrderJSONRequestBody = CreateOrderRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
 	// (GET /healthz)
 	GetHealth(w http.ResponseWriter, r *http.Request)
+
+	// (POST /orders)
+	CreateOrder(w http.ResponseWriter, r *http.Request)
+
+	// (GET /orders/{orderId})
+	GetOrderById(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -44,6 +86,45 @@ func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrder operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrder(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrderById operation middleware
+func (siw *ServerInterfaceWrapper) GetOrderById(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "orderId" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "orderId", r.PathValue("orderId"), &orderId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrderById(w, r, orderId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -174,6 +255,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealth)
+	m.HandleFunc("POST "+options.BaseURL+"/orders", wrapper.CreateOrder)
+	m.HandleFunc("GET "+options.BaseURL+"/orders/{orderId}", wrapper.GetOrderById)
 
 	return m
 }

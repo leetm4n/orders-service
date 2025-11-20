@@ -14,6 +14,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
+	github.com/oapi-codegen/runtime v1.1.2
 	github.com/quantumsheep/otelpgxpool v0.0.0-20240703163729-f58ca84cf847
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	go.opentelemetry.io/otel v1.38.0
@@ -28,6 +29,7 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.5.4 // indirect
 	github.com/amacneil/dbmate v1.16.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect

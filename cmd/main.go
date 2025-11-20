@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leetm4n/orders-service/config"
+	"github.com/leetm4n/orders-service/internal/repo"
 	"github.com/leetm4n/orders-service/internal/server"
 	"github.com/quantumsheep/otelpgxpool"
 	"golang.org/x/sync/errgroup"
@@ -62,6 +63,7 @@ func run() error {
 		Port:                       cfg.Port,
 		Host:                       cfg.Host,
 		GracefulShutdownTimeoutSec: cfg.GracefulShutdownTimeoutSec,
+		Queries:                    repo.New(pool),
 	})
 
 	eG, ctx := errgroup.WithContext(ctx)

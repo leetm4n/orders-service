@@ -9,8 +9,55 @@ paths:
       responses:
         200:
           $ref: "#/components/responses/GetHealthResponse"
+  /orders/{orderId}:
+    parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getOrderById
+      responses:
+        404:
+          $ref: "#/components/responses/ErrorResponse"
         500:
           $ref: "#/components/responses/ErrorResponse"
+        400:
+          $ref: "#/components/responses/ErrorResponse"
+        200:
+          description: Found order.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /orders:
+    post:
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        400:
+          $ref: "#/components/responses/ErrorResponse"
+        500:
+          $ref: "#/components/responses/ErrorResponse"
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
 components:
   responses:
     GetHealthResponse:
@@ -42,4 +89,57 @@ components:
             required:
             - error
             - code
-   
+  schemas:
+    Order:
+      type: object
+      required:
+        - sku
+        - quantity
+        - shippingAddress
+        - id
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        sku:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - shipped
+            - delivered
+            - cancelled
+        shippingAddress:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateOrderRequest:
+      type: object
+      required:
+        - sku
+        - quantity
+        - shippingAddress
+      properties:
+        sku:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        shippingAddress:
+          type: string
+        idempotencyKey:
+          type: string
+          format: uuid
