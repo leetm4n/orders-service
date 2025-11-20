@@ -10,8 +10,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leetm4n/orders-service/config"
+	"github.com/leetm4n/orders-service/internal/model"
 	"github.com/leetm4n/orders-service/internal/repo"
 	"github.com/leetm4n/orders-service/internal/server"
+	"github.com/leetm4n/orders-service/internal/worker"
 	"github.com/quantumsheep/otelpgxpool"
 	"golang.org/x/sync/errgroup"
 )
@@ -59,7 +61,10 @@ func run() error {
 		return fmt.Errorf("ping database error: %w", err)
 	}
 
-	server := server.NewServer(server.ServerOptions{
+	orderCreatedCh := make(chan model.OrderCreatedEvent, 100)
+	defer close(orderCreatedCh)
+
+	server := server.New(server.ServerOptions{
 		Port:                       cfg.Port,
 		Host:                       cfg.Host,
 		GracefulShutdownTimeoutSec: cfg.GracefulShutdownTimeoutSec,
@@ -67,8 +72,16 @@ func run() error {
 	})
 
 	eG, ctx := errgroup.WithContext(ctx)
+
+	// start server
 	eG.Go(func() error {
 		return server.Start(ctx)
+	})
+
+	// start worker
+	worker := worker.New(orderCreatedCh)
+	eG.Go(func() error {
+		return worker.Start(ctx)
 	})
 
 	if err := eG.Wait(); err != nil {

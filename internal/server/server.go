@@ -38,7 +38,7 @@ type ServerOptions struct {
 	Queries                    *repo.Queries
 }
 
-func NewServer(opts ServerOptions) *Server {
+func New(opts ServerOptions) *Server {
 	mux := http.NewServeMux()
 	spec, err := openapi3.NewLoader().LoadFromData([]byte(api.APIYaml))
 	if err != nil {
