@@ -104,13 +104,13 @@ func (s *ServerImpl) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}(r.Context())
 
 	response := api.Order{
-		Id:              openapiTypes.UUID([]byte(orderModel.ID)),
-		Quantity:        int(orderModel.Quantity),
-		CreatedAt:       orderModel.CreatedAt,
-		UpdatedAt:       orderModel.UpdatedAt,
-		Status:          api.OrderStatus(orderModel.Status),
-		ShippingAddress: orderModel.ShippingAddress,
-		Sku:             openapiTypes.UUID([]byte(orderModel.Sku)),
+		Id:              openapiTypes.UUID(createdOrder.ID.Bytes),
+		Quantity:        int(createdOrder.Quantity),
+		CreatedAt:       createdOrder.CreatedAt.Time,
+		UpdatedAt:       createdOrder.UpdatedAt.Time,
+		Status:          api.OrderStatus(createdOrder.Status),
+		ShippingAddress: createdOrder.ShippingAddress,
+		Sku:             openapiTypes.UUID(createdOrder.Sku.Bytes),
 	}
 
 	w.WriteHeader(http.StatusCreated)
