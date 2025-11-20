@@ -9,6 +9,8 @@ paths:
       responses:
         200:
           $ref: "#/components/responses/GetHealthResponse"
+        500:
+          $ref: "#/components/responses/ErrorResponse"
 components:
   responses:
     GetHealthResponse:
@@ -26,4 +28,18 @@ components:
             required:
             - status
             - timestamp
+    ErrorResponse:
+      description: Error response.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+            required:
+            - error
+            - code
    

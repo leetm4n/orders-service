@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+// ErrorResponse defines model for ErrorResponse.
+type ErrorResponse struct {
+	Code  int    `json:"code"`
+	Error string `json:"error"`
+}
+
 // GetHealthResponse defines model for GetHealthResponse.
 type GetHealthResponse struct {
 	Status    string    `json:"status"`
