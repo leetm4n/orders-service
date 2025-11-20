@@ -64,13 +64,19 @@ func New(opts ServerOptions) *Server {
 		return r.URL.Path != "/healthz"
 	}
 
-	otelMux := otelhttp.NewHandler(api.HandlerFromMux(s, mux), "orders-service-server", otelhttp.WithFilter(isNotHealthzPath))
+	handler := middlewares.ContentTypeSetterMW(
+		middlewares.ErrorHandlerMW(
+			middlewares.LoggerMW(
+				validationMW(api.HandlerFromMux(s, mux)),
+			),
+		),
+	)
 
-	handler := middlewares.ContentTypeSetterMW(validationMW(otelMux))
+	otelMux := otelhttp.NewHandler(handler, "orders-ms-server", otelhttp.WithFilter(isNotHealthzPath))
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", opts.Host, opts.Port),
-		Handler: handler,
+		Handler: otelMux,
 	}
 
 	return &Server{
