@@ -101,7 +101,6 @@ func (s *ServerImpl) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		case <-ctx.Done():
 			slog.Error("failed to emit order created event: context done", "error", ctx.Err())
 		}
-
 	}(r.Context())
 
 	response := api.Order{

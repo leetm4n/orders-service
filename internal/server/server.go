@@ -75,7 +75,16 @@ func New(opts ServerOptions) *Server {
 	handler := middlewares.ContentTypeSetterMW(
 		middlewares.ErrorHandlerMW(
 			middlewares.LoggerMW(
-				validationMW(api.HandlerFromMux(s, mux)),
+				validationMW(api.HandlerWithOptions(s, api.StdHTTPServerOptions{
+					BaseRouter: mux,
+					ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+						w.WriteHeader(http.StatusBadRequest)
+						_ = json.NewEncoder(w).Encode(api.ErrorResponse{
+							Error: err.Error(),
+							Code:  http.StatusBadRequest,
+						})
+					},
+				})),
 			),
 		),
 	)
