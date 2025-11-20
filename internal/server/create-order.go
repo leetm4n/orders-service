@@ -90,7 +90,7 @@ func (s *ServerImpl) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	func(ctx context.Context) {
-		ctx, span := s.tracer.Start(r.Context(), "emitOrderCreatedEvent")
+		ctx, span := s.tracer.Start(ctx, "emitOrderCreatedEvent")
 		defer span.End()
 		select {
 		case s.orderCreatedChan <- model.OrderCreatedEvent{
@@ -98,8 +98,8 @@ func (s *ServerImpl) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			Trace: tracing.SerializeTraceCtx(ctx),
 		}:
 			slog.Info("order created event emitted")
-		case <-r.Context().Done():
-			slog.Error("failed to emit order created event: context done", "error", r.Context().Err())
+		case <-ctx.Done():
+			slog.Error("failed to emit order created event: context done", "error", ctx.Err())
 		}
 
 	}(r.Context())
