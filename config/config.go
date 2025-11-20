@@ -11,7 +11,8 @@ type Config struct {
 	Port                       int    `envconfig:"PORT" default:"8080"`
 	Host                       string `envconfig:"HOST" default:""`
 	GracefulShutdownTimeoutSec int    `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT_SEC" default:"2"`
-	DATABASE_URL               string `envconfig:"DATABASE_URL"`
+	DatabaseURL                string `envconfig:"DATABASE_URL"`
+	TracingExporterEndpoint    string `envconfig:"TRACING_EXPORTER_ENDPOINT" default:"localhost:4317"`
 }
 
 func MustLoadConfig() Config {

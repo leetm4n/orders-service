@@ -14,13 +14,14 @@ import (
 	"github.com/leetm4n/orders-service/internal/repo"
 	"github.com/leetm4n/orders-service/internal/server"
 	"github.com/leetm4n/orders-service/internal/worker"
+	"github.com/leetm4n/orders-service/pkg/tracing"
 	"github.com/quantumsheep/otelpgxpool"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
-	slog.Info("starting")
+	slog.Info("application starting")
 
 	if err := run(); err != nil {
 		slog.Error("run failed", "error", err)
@@ -35,7 +36,9 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	otelShutdown, err := InitTracer(ctx)
+	cfg := config.MustLoadConfig()
+
+	otelShutdown, err := tracing.InitTracer(ctx, "orders-service", cfg.TracingExporterEndpoint)
 	if err != nil {
 		return err
 	}
@@ -43,9 +46,7 @@ func run() error {
 		err = errors.Join(err, otelShutdown(context.Background()))
 	}()
 
-	cfg := config.MustLoadConfig()
-
-	poolConfig, err := pgxpool.ParseConfig(cfg.DATABASE_URL)
+	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
 	if err != nil {
 		return err
 	}

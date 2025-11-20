@@ -1,4 +1,4 @@
-package main
+package tracing
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
-func InitTracer(ctx context.Context) (func(context.Context) error, error) {
+func InitTracer(ctx context.Context, serviceName, exporterEndpoint string) (func(context.Context) error, error) {
 	// Exporter (OTLP gRPC)
 	exp, err := otlptracegrpc.New(ctx,
+		otlptracegrpc.WithEndpoint(exporterEndpoint),
 		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint("localhost:4317"),
 	)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func InitTracer(ctx context.Context) (func(context.Context) error, error) {
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceName("orders-service"),
+			semconv.ServiceName(serviceName),
 		),
 	)
 	if err != nil {
