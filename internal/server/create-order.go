@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -12,6 +13,7 @@ import (
 	"github.com/leetm4n/orders-service/api"
 	"github.com/leetm4n/orders-service/internal/model"
 	"github.com/leetm4n/orders-service/internal/repo"
+	"github.com/leetm4n/orders-service/pkg/tracing"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 )
 
@@ -87,14 +89,20 @@ func (s *ServerImpl) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		Sku:             createdOrder.Sku.String(),
 	}
 
-	select {
-	case s.orderCreatedChan <- model.OrderCreatedEvent{
-		Order: orderModel,
-	}:
-		slog.Info("order created event emitted")
-	case <-r.Context().Done():
-		slog.Error("failed to emit order created event: context done", "error", r.Context().Err())
-	}
+	func(ctx context.Context) {
+		ctx, span := s.tracer.Start(r.Context(), "emitOrderCreatedEvent")
+		defer span.End()
+		select {
+		case s.orderCreatedChan <- model.OrderCreatedEvent{
+			Order: orderModel,
+			Trace: tracing.SerializeTraceCtx(ctx),
+		}:
+			slog.Info("order created event emitted")
+		case <-r.Context().Done():
+			slog.Error("failed to emit order created event: context done", "error", r.Context().Err())
+		}
+
+	}(r.Context())
 
 	response := api.Order{
 		Id:              openapiTypes.UUID([]byte(orderModel.ID)),

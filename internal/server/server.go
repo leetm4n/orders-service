@@ -16,6 +16,8 @@ import (
 	"github.com/leetm4n/orders-service/pkg/middlewares"
 	validationMw "github.com/oapi-codegen/nethttp-middleware"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,6 +26,7 @@ var _ api.ServerInterface = (*ServerImpl)(nil)
 type ServerImpl struct {
 	queries          *repo.Queries
 	orderCreatedChan chan<- model.OrderCreatedEvent
+	tracer           trace.Tracer
 }
 
 type Server struct {
@@ -62,6 +65,7 @@ func New(opts ServerOptions) *Server {
 	s := &ServerImpl{
 		queries:          opts.Queries,
 		orderCreatedChan: opts.OrderCreatedChan,
+		tracer:           otel.Tracer("orders-service"),
 	}
 
 	isNotHealthzPath := func(r *http.Request) bool {

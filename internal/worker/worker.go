@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/leetm4n/orders-service/internal/model"
+	"github.com/leetm4n/orders-service/pkg/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -48,6 +49,12 @@ func (w *Worker) Start(ctx context.Context) error {
 
 func (w *Worker) processOrderEvent(ctx context.Context, event model.OrderCreatedEvent) error {
 	slog.Info("processing order event", "orderId", event.Order.ID)
+
+	eventCtx := tracing.DeserializeTraceCtx(event.Trace)
+
+	_, span := w.tracer.Start(eventCtx, "processOrderEvent")
+	defer span.End()
+	// Simulate processing the order event
 
 	select {
 	case <-ctx.Done():

@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/leetm4n/orders-service/pkg/tracing"
+)
 
 type Order struct {
 	ID              string    `json:"id"`
@@ -13,5 +17,6 @@ type Order struct {
 }
 
 type OrderCreatedEvent struct {
-	Order Order `json:"order"`
+	Order Order                 `json:"order"`
+	Trace tracing.TraceEnvelope `json:"trace"`
 }
