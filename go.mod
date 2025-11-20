@@ -1,4 +1,4 @@
-module github.com/leetm4n/special-giggle
+module github.com/leetm4n/orders-service
 
 go 1.25.4
 
