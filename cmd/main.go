@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leetm4n/orders-service/config"
 	"github.com/leetm4n/orders-service/internal/server"
+	"github.com/quantumsheep/otelpgxpool"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -30,12 +32,22 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
+	otelShutdown, err := InitTracer(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = errors.Join(err, otelShutdown(context.Background()))
+	}()
+
 	cfg := config.MustLoadConfig()
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.DATABASE_URL)
 	if err != nil {
 		return err
 	}
+
+	poolConfig.ConnConfig.Tracer = otelpgxpool.NewTracer()
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {

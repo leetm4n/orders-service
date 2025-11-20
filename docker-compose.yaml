@@ -10,5 +10,15 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - '4317:4317' # OTLP gRPC
+      - '4318:4318' # OTLP HTTP
+      - '16686:16686' # Jaeger Query UI
+
 volumes:
   db-data:
