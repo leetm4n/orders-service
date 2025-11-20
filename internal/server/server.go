@@ -11,6 +11,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/leetm4n/orders-service/api"
+	"github.com/leetm4n/orders-service/internal/model"
 	"github.com/leetm4n/orders-service/internal/repo"
 	"github.com/leetm4n/orders-service/pkg/middlewares"
 	validationMw "github.com/oapi-codegen/nethttp-middleware"
@@ -21,7 +22,8 @@ import (
 var _ api.ServerInterface = (*ServerImpl)(nil)
 
 type ServerImpl struct {
-	queries *repo.Queries
+	queries          *repo.Queries
+	orderCreatedChan chan<- model.OrderCreatedEvent
 }
 
 type Server struct {
@@ -36,6 +38,7 @@ type ServerOptions struct {
 	Host                       string
 	GracefulShutdownTimeoutSec int
 	Queries                    *repo.Queries
+	OrderCreatedChan           chan<- model.OrderCreatedEvent
 }
 
 func New(opts ServerOptions) *Server {
@@ -57,7 +60,8 @@ func New(opts ServerOptions) *Server {
 	})
 
 	s := &ServerImpl{
-		queries: opts.Queries,
+		queries:          opts.Queries,
+		orderCreatedChan: opts.OrderCreatedChan,
 	}
 
 	isNotHealthzPath := func(r *http.Request) bool {

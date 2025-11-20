@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/leetm4n/orders-service/api"
+	"github.com/leetm4n/orders-service/internal/model"
 	"github.com/leetm4n/orders-service/internal/repo"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 )
@@ -76,14 +77,33 @@ func (s *ServerImpl) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := api.Order{
-		Id:              openapiTypes.UUID(createdOrder.ID.Bytes),
+	orderModel := model.Order{
+		ID:              createdOrder.ID.String(),
 		Quantity:        int(createdOrder.Quantity),
 		CreatedAt:       createdOrder.CreatedAt.Time,
 		UpdatedAt:       createdOrder.UpdatedAt.Time,
-		Status:          api.OrderStatus(createdOrder.Status),
+		Status:          string(createdOrder.Status),
 		ShippingAddress: createdOrder.ShippingAddress,
-		Sku:             openapiTypes.UUID(createdOrder.Sku.Bytes),
+		Sku:             createdOrder.Sku.String(),
+	}
+
+	select {
+	case s.orderCreatedChan <- model.OrderCreatedEvent{
+		Order: orderModel,
+	}:
+		slog.Info("order created event emitted")
+	case <-r.Context().Done():
+		slog.Error("failed to emit order created event: context done", "error", r.Context().Err())
+	}
+
+	response := api.Order{
+		Id:              openapiTypes.UUID([]byte(orderModel.ID)),
+		Quantity:        int(orderModel.Quantity),
+		CreatedAt:       orderModel.CreatedAt,
+		UpdatedAt:       orderModel.UpdatedAt,
+		Status:          api.OrderStatus(orderModel.Status),
+		ShippingAddress: orderModel.ShippingAddress,
+		Sku:             openapiTypes.UUID([]byte(orderModel.Sku)),
 	}
 
 	w.WriteHeader(http.StatusCreated)

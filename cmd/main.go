@@ -70,6 +70,7 @@ func run() error {
 		Host:                       cfg.Host,
 		GracefulShutdownTimeoutSec: cfg.GracefulShutdownTimeoutSec,
 		Queries:                    repo.New(pool),
+		OrderCreatedChan:           orderCreatedCh,
 	})
 
 	eG, ctx := errgroup.WithContext(ctx)
