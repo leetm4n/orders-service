@@ -1,0 +1,29 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Orders API
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      responses:
+        200:
+          $ref: "#/components/responses/GetHealthResponse"
+components:
+  responses:
+    GetHealthResponse:
+      description: Health status.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+            required:
+            - status
+            - timestamp
+   
